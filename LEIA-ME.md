@@ -5,7 +5,8 @@ App para o encarregado preencher o boletim direto no celular, salvando automatic
 ## Arquivos desta pasta
 
 - `index.html` — o aplicativo (funciona tanto no celular quanto no computador).
-- `manifest.json` e `icon.svg` — permitem "Adicionar à tela inicial" no celular.
+- `manifest.json`, `service-worker.js`, `icon-192.png`, `icon-512.png`, `icon-180.png` — permitem instalar o app na tela inicial do celular como um aplicativo de verdade.
+- `logo.png` — logo oficial da Size Engenharia, já recortado com fundo transparente.
 - `Code.gs` — o backend que grava e lê os dados na Planilha Google. **Não vai para o site**, é colado no Google Apps Script (passo a passo abaixo).
 
 ## Parte 1 — Criar a planilha e o backend (uma única vez)
