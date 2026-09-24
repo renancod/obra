@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Boletim Diário de Produção — Size Engenharia</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0E2A5E">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Boletim Diário">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0E2A5E;
+    --navy-2:#173A78;
+    --teal:#03827B;
+    --teal-dark:#035D5B;
+    --teal-light:#5FBAA9;
+    --paper:#F5F7F7;
+    --card:#FFFFFF;
+    --ink:#132033;
+    --muted:#5C6B78;
+    --border:#DDE3E6;
+    --ok:#03827B;
+    --ok-bg:#E4F2EF;
+    --warn:#B9791C;
+    --warn-bg:#FBF0DD;
+    --err:#B23A2E;
+    --err-bg:#FBEAE7;
+    --idle:#8B97A3;
+    --idle-bg:#EEF1F3;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+    --radius: 6px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:var(--sans);max-width:100%;overflow-x:hidden;}
+  body{min-height:100vh; padding-bottom:48px;}
+  #app{max-width:720px;margin:0 auto;}
+  h1,h2,h3{font-family:var(--sans); margin:0; letter-spacing:-0.01em;}
+  a{color:var(--teal)}
+  button{font-family:var(--sans); cursor:pointer;}
+  input,textarea,select{font-family:var(--sans); font-size:16px; width:100%; min-width:0;}
+
+  .topbar{
+    background:#fff;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px;
+    border-bottom:3px solid var(--teal);
+  }
+  .brand{display:flex; align-items:center; gap:10px; min-width:0;}
+  .brand.center{flex-direction:column; align-items:center; margin-bottom:6px;}
+  .logo{height:38px; max-width:170px; object-fit:contain;}
+  .brandtext{display:flex; flex-direction:column; line-height:1.15; min-width:0;}
+  .brand-co{font-family:var(--mono); font-size:10.5px; letter-spacing:0.12em; color:var(--muted);}
+  .brand.center .brand-co{margin-top:4px;}
+  .topbar h1{font-size:15px; font-weight:700; color:var(--navy);}
+  .gear{
+    background:var(--navy); border:none; color:#fff;
+    width:36px; height:36px; border-radius:50%; font-size:16px; flex:none;
+  }
+  .gear:active{background:var(--navy-2)}
+
+  .modeswitch{
+    display:flex; gap:0; margin:14px 16px 0; border:1px solid var(--navy);
+    border-radius:var(--radius); overflow:hidden;
+  }
+  .modeswitch button{
+    flex:1; background:#fff; border:none; padding:10px 6px; font-size:12.5px; font-weight:700;
+    color:var(--navy); border-right:1px solid var(--navy);
+  }
+  .modeswitch button:last-child{border-right:none}
+  .modeswitch button.active{background:var(--navy); color:#fff;}
+
+  .sheet{
+    background:var(--card); margin:16px; padding:18px 16px;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:0 1px 2px rgba(14,42,94,0.05);
+  }
+  .setup{text-align:left; max-width:420px; margin:40px auto;}
+  .setup p{color:var(--muted); font-size:14.5px; line-height:1.5;}
+
+  .block{margin-top:18px; padding-top:14px; border-top:1px dashed var(--border);}
+  .block:first-of-type{border-top:none; margin-top:6px; padding-top:0;}
+  .block h2, .block-title{font-size:12.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--teal-dark); font-family:var(--mono); font-weight:600; margin-bottom:10px;}
+  .section-title{font-size:13px; text-transform:uppercase; letter-spacing:0.08em; color:var(--navy); font-family:var(--mono); font-weight:700; margin:22px 16px 6px;}
+
+  .field-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
+  .field-row label{flex:1 1 140px; display:flex; flex-direction:column; gap:4px; font-size:12.5px; color:var(--muted); font-weight:600;}
+  .field-row label.full{flex-basis:100%;}
+  input[type=text], input[type=date], input[type=number], input:not([type]), textarea, select{
+    border:1px solid #C7D2DA; border-radius:var(--radius); padding:10px; color:var(--ink); background:#fff;
+  }
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--teal); outline-offset:1px; border-color:var(--teal);}
+  textarea{resize:vertical; font-size:15px;}
+
+  .item-row{
+    display:grid; grid-template-columns: minmax(0,1.6fr) minmax(0,0.7fr) auto;
+    gap:6px; margin-bottom:8px; align-items:center; width:100%;
+  }
+  .item-row.material{grid-template-columns: minmax(0,1.1fr) minmax(0,0.6fr) minmax(0,0.5fr) minmax(0,0.9fr) auto;}
+  .item-row input, .item-row select{padding:9px; font-size:14.5px; min-width:0;}
+  .removerow{
+    background:#fff; border:1px solid #C7D2DA; color:var(--err); width:32px; height:32px; border-radius:50%; font-size:16px; line-height:1; flex:none;
+  }
+  .addrow{
+    background:#fff; border:1px dashed var(--teal); color:var(--teal-dark); padding:9px 12px;
+    border-radius:var(--radius); font-size:13.5px; font-weight:600; width:100%;
+  }
+  .addrow:active{background:var(--ok-bg);}
+
+  .fotos-row{display:flex; align-items:center; gap:16px; margin-top:16px; flex-wrap:wrap; padding-top:14px; border-top:1px dashed var(--border);}
+  .check{display:flex; align-items:center; gap:6px; font-size:14px; width:auto;}
+  .check input{width:18px; height:18px;}
+  .qtd{display:flex; align-items:center; gap:6px; font-size:14px; color:var(--muted); width:auto;}
+  .qtd input{padding:6px; width:4.5em;}
+
+  .submit-btn{
+    margin-top:20px; width:100%; background:var(--teal); color:#fff; border:none; padding:14px;
+    border-radius:var(--radius); font-size:15.5px; font-weight:700; letter-spacing:0.02em;
+  }
+  .submit-btn:active{background:var(--teal-dark);}
+  .submit-btn:disabled{opacity:0.6;}
+  .ghost{background:#fff; border:1px solid var(--navy); color:var(--navy); padding:12px 16px; border-radius:var(--radius); font-weight:700;}
+  .hint{color:var(--muted); font-size:12.5px; margin-top:8px; text-align:center;}
+  .hint.error{color:var(--err); text-align:left;}
+
+  .banner{
+    margin:14px 16px 0; background:var(--warn-bg); color:var(--warn); border:1px solid #E8C98A;
+    border-radius:var(--radius); padding:10px 12px; font-size:13.5px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .banner button{background:var(--warn); color:#fff; border:none; padding:7px 10px; border-radius:var(--radius); font-size:12.5px; font-weight:600;}
+
+  .viewtools{display:flex; gap:8px; margin:16px 16px 0;}
+  .viewtools input{flex:1; padding:11px; border:1px solid #C7D2DA; border-radius:var(--radius); background:#fff;}
+  .viewtools button{border:1px solid var(--navy); background:#fff; color:var(--navy); border-radius:var(--radius); padding:0 14px; font-weight:700;}
+  #viewList{display:flex; flex-direction:column;}
+  .card .card-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .card .card-head strong{display:block; font-size:15.5px;}
+  .card .muted{color:var(--muted);}
+  .card .small{font-size:12.5px;}
+  .datebadge{font-family:var(--mono); font-size:12.5px; background:var(--navy); color:#fff; padding:4px 8px; border-radius:var(--radius); white-space:nowrap;}
+  .card h3{font-size:11.5px; text-transform:uppercase; letter-spacing:0.07em; color:var(--teal-dark); font-family:var(--mono); margin-top:14px; margin-bottom:6px;}
+  table.mini{width:100%; border-collapse:collapse; font-size:13.5px;}
+  table.mini td{padding:5px 4px; border-bottom:1px solid #EEF1F3; vertical-align:top;}
+  table.mini td.muted{color:#9AA6B0; font-style:italic;}
+  .card p{font-size:13.5px; margin:8px 0 0;}
+  .badge{display:inline-block; font-size:12px; font-weight:700; padding:5px 10px; border-radius:20px; white-space:normal; max-width:100%; overflow-wrap:break-word;}
+  .badge.ok{background:var(--ok-bg); color:var(--ok);}
+  .badge.pending{background:var(--warn-bg); color:var(--warn);}
+  .badge.status-ok{background:var(--ok-bg); color:var(--ok);}
+  .badge.status-warn{background:var(--warn-bg); color:var(--warn);}
+  .badge.status-idle{background:var(--idle-bg); color:var(--idle);}
+
+  .etapa-card .card-head{align-items:center;}
+  .progress-track{background:#E9EDEF; border-radius:20px; height:10px; overflow:hidden; margin-top:12px;}
+  .progress-fill{height:100%; border-radius:20px; transition:width .3s ease;}
+  .progress-label{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:5px; font-family:var(--mono);}
+  .chip{display:inline-block; background:var(--idle-bg); color:var(--ink); font-size:12px; padding:3px 8px; border-radius:12px; margin:2px 3px 0 0;}
+
+  @media (min-width:760px){
+    #app{max-width:900px;}
+    .setup{margin:64px auto;}
+  }
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(14,26,45,0.55); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50;
+  }
+  .modal{background:#fff; border-radius:var(--radius); padding:20px; max-width:420px; width:100%;}
+  .modal h2{font-size:16px; margin-bottom:14px; color:var(--navy);}
+  .modal label{display:flex; flex-direction:column; gap:4px; font-size:12.5px; color:var(--muted); font-weight:600; margin-top:12px;}
+  .modal-actions{display:flex; gap:10px; margin-top:18px;}
+  .modal-actions button{flex:1;}
+
+  .toast{
+    position:fixed; left:50%; bottom:24px; transform:translate(-50%, 20px); opacity:0;
+    background:var(--navy); color:#fff; padding:11px 18px; border-radius:var(--radius); font-size:14px;
+    transition:all .25s ease; z-index:100; max-width:88vw; text-align:center;
+  }
+  .toast.show{opacity:1; transform:translate(-50%,0);}
+  .toast.ok{background:var(--ok);}
+  .toast.warn{background:var(--warn);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+function loadConfig(){ try{ return JSON.parse(localStorage.getItem('bdp_config')) || {}; }catch(e){ return {}; } }
+function saveConfig(cfg){ localStorage.setItem('bdp_config', JSON.stringify(cfg)); CONFIG = cfg; }
+function getQueue(){ try{ return JSON.parse(localStorage.getItem('bdp_queue')) || []; }catch(e){ return []; } }
+function saveQueue(q){ localStorage.setItem('bdp_queue', JSON.stringify(q)); }
+
+let CONFIG = loadConfig();
+const root = document.getElementById('app');
+
+function esc(s){ return (s===undefined||s===null)?'':String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function todayISO(){ const d=new Date(); const off=d.getTimezoneOffset(); const local=new Date(d.getTime()-off*60000); return local.toISOString().slice(0,10); }
+function formatDateBR(iso){ if(!iso) return '—'; const s=String(iso).slice(0,10); const p=s.split('-'); return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : s; }
+function formatDateTimeBR(iso){ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR'); }catch(e){ return String(iso); } }
+function showToast(msg, type){
+  const t=document.createElement('div');
+  t.className='toast '+(type||'');
+  t.textContent=msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),300); }, 3200);
+}
+function progressColor(pct){
+  pct = Math.max(0, Math.min(100, pct));
+  const stops = [ {p:0,c:[178,58,46]}, {p:50,c:[185,121,28]}, {p:100,c:[3,130,123]} ];
+  let a=stops[0], b=stops[1];
+  if(pct>50){ a=stops[1]; b=stops[2]; }
+  const t=(pct-a.p)/((b.p-a.p)||1);
+  const rgb = a.c.map((v,i)=>Math.round(v+(b.c[i]-v)*t));
+  return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+}
+
+async function getEtapas(){
+  if(!CONFIG.scriptUrl) return [];
+  try{
+    const res = await fetch(CONFIG.scriptUrl + '?action=plano');
+    const json = await res.json();
+    if(json.ok){ localStorage.setItem('bdp_etapas_cache', JSON.stringify(json.data)); return json.data; }
+  }catch(e){}
+  try{ return JSON.parse(localStorage.getItem('bdp_etapas_cache')) || []; }catch(e){ return []; }
+}
+function opcoesEtapas(etapas, opts){
+  opts = opts || {};
+  const somenteAbertas = opts.somenteAbertas !== false;
+  const comVazio = !!opts.comVazio;
+  let lista = etapas || [];
+  if(somenteAbertas) lista = lista.filter(e=>e.status!=='Concluída');
+  let html = comVazio ? '<option value="">(não vinculado)</option>' : '<option value="">Selecione a etapa...</option>';
+  html += lista.map(e=>`<option value="${esc(e.id)}">${esc(e.empreendimento)} — ${esc(e.nome)} (${esc(e.unidade)})</option>`).join('');
+  return html;
+}
+function findEtapa(id){ return (window.__etapas||[]).find(e=>e.id===id); }
+
+function render(){
+  const params = new URLSearchParams(location.search);
+  if(params.get('confirmar')){ renderConfirmScreen(params.get('confirmar'), params.get('api')); return; }
+  if(!CONFIG.scriptUrl){ renderSetup(); return; }
+  renderShell();
+}
+
+function renderSetup(){
+  root.innerHTML = `
+    <header class="topbar"><div class="brand"><img class="logo" src="logo.png" alt="" onerror="this.style.display='none'"><div class="brandtext"><span class="brand-co">SIZE ENGENHARIA</span><h1>Boletim Diário</h1></div></div></header>
+    <div class="setup sheet">
+      <h1>Configuração inicial</h1>
+      <p>Cole abaixo a URL do App da Web do Google Apps Script (gerada seguindo o LEIA-ME.md) para conectar este aplicativo à planilha no Drive.</p>
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600;">
+        URL do App da Web
+        <input id="setupUrl" placeholder="https://script.google.com/macros/s/.../exec">
+      </label>
+      <button data-action="setup-save" class="submit-btn">Salvar e continuar</button>
+    </div>
+  `;
+}
+
+function renderShell(){
+  root.innerHTML = `
+    <header class="topbar">
+      <div class="brand">
+        <img class="logo" src="logo.png" alt="" onerror="this.style.display='none'">
+        <div class="brandtext"><span class="brand-co">SIZE ENGENHARIA</span><h1>Boletim Diário de Produção</h1></div>
+      </div>
+      <button class="gear" data-action="settings" aria-label="Configurações">&#9881;</button>
+    </header>
+    <div class="modeswitch">
+      <button data-action="mode" data-mode="editar" class="${(!CONFIG.mode||CONFIG.mode==='editar')?'active':''}">Editar em campo</button>
+      <button data-action="mode" data-mode="plano" class="${CONFIG.mode==='plano'?'active':''}">Plano de Ação</button>
+      <button data-action="mode" data-mode="visualizar" class="${CONFIG.mode==='visualizar'?'active':''}">Painel</button>
+    </div>
+    <div id="pendingBanner"></div>
+    <main id="main"></main>
+  `;
+  renderPendingBanner();
+  if(CONFIG.mode==='visualizar'){ renderView(); }
+  else if(CONFIG.mode==='plano'){ renderPlano(); }
+  else { renderEdit(); }
+}
+
+function renderPendingBanner(){
+  const el = document.getElementById('pendingBanner');
+  if(!el) return;
+  const q = getQueue();
+  el.innerHTML = q.length ? `<div class="banner"><span>${q.length} boletim(ns) sem conexão, salvo(s) neste aparelho</span><button data-action="flush-queue">tentar enviar</button></div>` : '';
+}
+
+async function renderEdit(){
+  const main = document.getElementById('main');
+  if(!main) return;
+  main.innerHTML = `<div class="sheet"><p class="hint">Carregando etapas do plano de ação…</p></div>`;
+  const etapas = await getEtapas();
+  window.__etapas = etapas;
+
+  main.innerHTML = `
+    <form id="boletimForm" class="sheet">
+      <div class="field-row">
+        <label>Empreendimento<input name="empreendimento" required value="${esc(CONFIG.empreendimentoPadrao||'')}"></label>
+        <label>Encarregado<input name="encarregado" required value="${esc(CONFIG.encarregadoPadrao||'')}"></label>
+      </div>
+      <div class="field-row">
+        <label>Data<input type="date" name="data" required value="${todayISO()}"></label>
+        <label>Condição climática<input name="condicao" placeholder="Ex: Sol, praticável"></label>
+      </div>
+
+      <div class="block">
+        <h2>Execução do dia (vinculada ao plano de ação)</h2>
+        <div id="producaoRows"></div>
+        <button type="button" class="addrow" data-action="add-producao">+ adicionar etapa executada hoje</button>
+        ${!etapas.length ? '<p class="hint" style="text-align:left">Nenhuma etapa cadastrada ainda — vá em "Plano de Ação" para cadastrar antes de lançar a execução.</p>' : ''}
+      </div>
+
+      <div class="block">
+        <h2>Materiais utilizados</h2>
+        <div id="materiaisRows"></div>
+        <button type="button" class="addrow" data-action="add-material">+ adicionar material</button>
+      </div>
+
+      <div class="block">
+        <h2>Equipe / equipamentos</h2>
+        <div class="field-row">
+          <label class="full"><textarea name="equipe" rows="2" placeholder="Ex: Equipe esgoto + escavadeira + retroescavadeira"></textarea></label>
+        </div>
+        <div class="fotos-row">
+          <label class="check"><input type="checkbox" name="fotosRealizadas"> Fotos realizadas</label>
+          <label class="check"><input type="checkbox" name="fotosEnviadas"> Fotos enviadas</label>
+          <span class="qtd">Qtd. <input type="number" min="0" name="qtdFotos"></span>
+        </div>
+      </div>
+
+      <div class="block">
+        <h2>Ocorrências / observações</h2>
+        <div class="field-row">
+          <label class="full"><textarea name="ocorrencias" rows="3" placeholder="Sem ocorrência."></textarea></label>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <label>Preenchido por<input name="preenchidoPor" required value="${esc(CONFIG.encarregadoPadrao||'')}"></label>
+      </div>
+
+      <button type="submit" class="submit-btn">Enviar boletim</button>
+      <p class="hint">Os dados vão direto para a planilha no Drive da Size Engenharia.</p>
+    </form>
+  `;
+  addProducaoRow();
+  addMaterialRow();
+  document.getElementById('boletimForm').addEventListener('submit', onSubmit);
+}
+
+function addProducaoRow(){
+  const wrap = document.getElementById('producaoRows');
+  if(!wrap) return;
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <select class="p-etapa">${opcoesEtapas(window.__etapas)}</select>
+    <input placeholder="Qtd. hoje" type="number" step="any" class="p-quant">
+    <button type="button" class="removerow" data-action="remove-row" aria-label="Remover item">&times;</button>
+  `;
+  wrap.appendChild(row);
+}
+function addMaterialRow(){
+  const wrap = document.getElementById('materiaisRows');
+  if(!wrap) return;
+  const row = document.createElement('div');
+  row.className = 'item-row material';
+  row.innerHTML = `
+    <input placeholder="Material" class="m-material">
+    <input placeholder="Quant." type="number" step="any" class="m-quant">
+    <input placeholder="Un." class="m-un">
+    <select class="m-etapa">${opcoesEtapas(window.__etapas, {comVazio:true})}</select>
+    <button type="button" class="removerow" data-action="remove-row" aria-label="Remover item">&times;</button>
+  `;
+  wrap.appendChild(row);
+}
+
+async function onSubmit(ev){
+  ev.preventDefault();
+  const f = ev.target;
+  const payload = {
+    empreendimento: f.empreendimento.value.trim(),
+    encarregado: f.encarregado.value.trim(),
+    data: f.data.value,
+    condicao: f.condicao.value.trim(),
+    producao: [...document.querySelectorAll('#producaoRows .item-row')].map(r => {
+      const etapaId = r.querySelector('.p-etapa').value;
+      const etapa = findEtapa(etapaId);
+      return {
+        etapaId,
+        etapaNome: etapa ? etapa.nome : '',
+        unidade: etapa ? etapa.unidade : '',
+        quantidade: r.querySelector('.p-quant').value
+      };
+    }).filter(i => i.etapaId && i.quantidade),
+    materiais: [...document.querySelectorAll('#materiaisRows .item-row')].map(r => {
+      const etapaId = r.querySelector('.m-etapa').value;
+      const etapa = findEtapa(etapaId);
+      return {
+        material: r.querySelector('.m-material').value.trim(),
+        quantidade: r.querySelector('.m-quant').value,
+        unidade: r.querySelector('.m-un').value.trim(),
+        etapaId,
+        etapaNome: etapa ? etapa.nome : ''
+      };
+    }).filter(i => i.material || i.quantidade),
+    equipe: f.equipe.value.trim(),
+    fotosRealizadas: f.fotosRealizadas.checked,
+    fotosEnviadas: f.fotosEnviadas.checked,
+    qtdFotos: f.qtdFotos.value,
+    ocorrencias: f.ocorrencias.value.trim(),
+    preenchidoPor: f.preenchidoPor.value.trim()
+  };
+  saveConfig({...CONFIG, empreendimentoPadrao: payload.empreendimento, encarregadoPadrao: payload.encarregado});
+  const btn = f.querySelector('.submit-btn');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  await sendBoletim(payload, false);
+  btn.disabled = false;
+}
+
+async function sendBoletim(payload, fromQueue){
+  try{
+    const res = await fetch(CONFIG.scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    });
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || 'Falha ao salvar');
+    if(!fromQueue){ showToast('Boletim enviado ✓', 'ok'); renderPostSubmit(payload, json.id); }
+    return true;
+  }catch(err){
+    if(!fromQueue){
+      const q = getQueue(); q.push(payload); saveQueue(q);
+      showToast('Sem conexão — boletim guardado neste aparelho', 'warn');
+      renderPendingBanner();
+      renderEdit();
+    }
+    return false;
+  }
+}
+
+function renderPostSubmit(payload, id){
+  const main = document.getElementById('main');
+  if(!main) return;
+  if(!id){
+    main.innerHTML = `<div class="sheet"><p class="badge ok">✓ Boletim enviado</p></div>`;
+    setTimeout(renderEdit, 1200);
+    return;
+  }
+  const link = location.origin + location.pathname + '?confirmar=' + encodeURIComponent(id) + '&api=' + encodeURIComponent(CONFIG.scriptUrl);
+  const texto = `Boletim ${payload.empreendimento} — ${formatDateBR(payload.data)}: confira e confirme em ${link}`;
+  main.innerHTML = `
+    <div class="sheet" style="text-align:center">
+      <p class="badge ok" style="margin-bottom:6px">✓ Boletim enviado</p>
+      <p class="hint" style="margin-bottom:16px">Agora envie o link abaixo para o empreiteiro confirmar o recebimento.</p>
+      <button class="submit-btn" id="shareBtn">Compartilhar com o empreiteiro</button>
+      <button class="ghost" id="copyBtn" style="margin-top:10px;width:100%">Copiar link</button>
+      <button class="ghost" id="novoBtn" style="margin-top:10px;width:100%">Lançar novo boletim</button>
+    </div>
+  `;
+  document.getElementById('shareBtn').addEventListener('click', async () => {
+    if(navigator.share){
+      try{ await navigator.share({ title: 'Boletim diário', text: texto, url: link }); return; }catch(e){ return; }
+    }
+    window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+  });
+  document.getElementById('copyBtn').addEventListener('click', async () => {
+    try{ await navigator.clipboard.writeText(link); showToast('Link copiado ✓', 'ok'); }
+    catch(e){ window.prompt('Copie o link abaixo:', link); }
+  });
+  document.getElementById('novoBtn').addEventListener('click', renderEdit);
+}
+
+async function tryFlushQueue(){
+  const q = getQueue();
+  if(!q.length || !CONFIG.scriptUrl) return;
+  const remaining = [];
+  for(const item of q){
+    const ok = await sendBoletim(item, true);
+    if(!ok) remaining.push(item);
+  }
+  const sentCount = q.length - remaining.length;
+  saveQueue(remaining);
+  renderPendingBanner();
+  if(sentCount > 0) showToast(sentCount + ' boletim(ns) pendente(s) enviado(s) ✓', 'ok');
+}
+
+async function renderPlano(){
+  const main = document.getElementById('main');
+  if(!main) return;
+  main.innerHTML = `<div class="sheet"><p class="hint">Carregando plano de ação…</p></div>`;
+  const etapas = await getEtapas();
+  window.__etapas = etapas;
+  main.innerHTML = `
+    <form id="etapaForm" class="sheet">
+      <h2 class="block-title">Nova etapa</h2>
+      <div class="field-row">
+        <label>Empreendimento<input name="empreendimento" required value="${esc(CONFIG.empreendimentoPadrao||'')}"></label>
+        <label>Nome da etapa<input name="nome" required placeholder="Ex: Rede cloacal — Rua A"></label>
+      </div>
+      <div class="field-row">
+        <label>Quantidade planejada (base)<input type="number" step="any" name="quantidadePlanejada" required></label>
+        <label>Unidade<input name="unidade" required placeholder="Ex: m, un, m²"></label>
+      </div>
+      <div class="field-row">
+        <label>Responsável previsto (opcional)<input name="responsavel"></label>
+      </div>
+      <button type="submit" class="submit-btn">Cadastrar etapa</button>
+    </form>
+    <div id="etapasList"></div>
+  `;
+  document.getElementById('etapaForm').addEventListener('submit', onCriarEtapa);
+  paintEtapasList(etapas, true);
+}
+
+function paintEtapasList(etapas, editavel){
+  const wrap = document.getElementById('etapasList');
+  if(!wrap) return;
+  if(!etapas.length){ wrap.innerHTML = `<div class="sheet"><p class="hint">Nenhuma etapa cadastrada ainda.</p></div>`; return; }
+  wrap.innerHTML = etapas.map(e => renderEtapaCard(e, editavel)).join('');
+}
+
+function renderEtapaCard(e, editavel){
+  const pct = Math.round(e.progresso || 0);
+  const cor = progressColor(pct);
+  const statusLabel = e.status==='Concluída' ? 'Concluída' : (pct>0 ? 'Em andamento' : 'Não iniciada');
+  const statusClasse = statusLabel==='Concluída' ? 'status-ok' : (statusLabel==='Em andamento' ? 'status-warn' : 'status-idle');
+  const hoje = (e.quemHoje && e.quemHoje.length) ? esc(e.quemHoje.join(', ')) : null;
+  const matHoje = (e.materiaisHoje||[]).map(m=>`<span class="chip">${esc(m.material)}: ${esc(m.quantidade)} ${esc(m.unidade)}</span>`).join(' ');
+  return `
+    <article class="sheet card etapa-card">
+      <div class="card-head">
+        <div><strong>${esc(e.nome)}</strong><br><span class="muted small">${esc(e.empreendimento)}</span></div>
+        <span class="badge ${statusClasse}">${statusLabel}</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${cor}"></div></div>
+      <div class="progress-label"><span>${pct}%</span><span>${esc(e.executadoTotal||0)} / ${esc(e.quantidadePlanejada)} ${esc(e.unidade)}</span></div>
+      ${hoje ? `<p class="small"><strong>Hoje:</strong> +${esc(e.executadoHoje||0)} ${esc(e.unidade)} — por ${hoje}</p>` : ''}
+      ${matHoje ? `<p class="small"><strong>Material hoje:</strong> ${matHoje}</p>` : ''}
+      ${e.responsavel ? `<p class="small muted">Responsável previsto: ${esc(e.responsavel)}</p>` : ''}
+      ${editavel && e.status!=='Concluída' ? `<button class="ghost" data-action="encerrar-etapa" data-id="${esc(e.id)}" style="margin-top:10px;width:100%">Encerrar etapa</button>` : ''}
+    </article>
+  `;
+}
+
+async function onCriarEtapa(ev){
+  ev.preventDefault();
+  const f = ev.target;
+  const payload = {
+    empreendimento: f.empreendimento.value.trim(),
+    nome: f.nome.value.trim(),
+    quantidadePlanejada: f.quantidadePlanejada.value,
+    unidade: f.unidade.value.trim(),
+    responsavel: f.responsavel.value.trim()
+  };
+  saveConfig({...CONFIG, empreendimentoPadrao: payload.empreendimento});
+  const btn = f.querySelector('.submit-btn');
+  btn.disabled = true; btn.textContent = 'Cadastrando...';
+  try{
+    const res = await fetch(CONFIG.scriptUrl + '?action=etapa-criar', {
+      method: 'POST', body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    });
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error);
+    showToast('Etapa cadastrada ✓', 'ok');
+    renderPlano();
+  }catch(err){
+    showToast('Não foi possível cadastrar — verifique a conexão', 'warn');
+    btn.disabled = false; btn.textContent = 'Cadastrar etapa';
+  }
+}
+
+async function onEncerrarEtapa(id){
+  if(!confirm('Encerrar esta etapa? Ela ficará marcada como Concluída e sairá da lista de seleção nos novos lançamentos.')) return;
+  try{
+    const res = await fetch(CONFIG.scriptUrl + '?action=etapa-encerrar', {
+      method: 'POST', body: JSON.stringify({ id }),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    });
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error);
+    showToast('Etapa encerrada ✓', 'ok');
+    renderPlano();
+  }catch(err){
+    showToast('Não foi possível encerrar — verifique a conexão', 'warn');
+  }
+}
+
+async function renderView(){
+  const main = document.getElementById('main');
+  if(!main) return;
+  main.innerHTML = `<div class="sheet"><p class="hint">Carregando painel…</p></div>`;
+  try{
+    const [etapas, boletinsRes] = await Promise.all([
+      getEtapas(),
+      fetch(CONFIG.scriptUrl + '?action=list').then(r => r.json())
+    ]);
+    window.__etapas = etapas;
+    if(!boletinsRes.ok) throw new Error(boletinsRes.error);
+    renderPainel(etapas, boletinsRes.data || []);
+  }catch(err){
+    main.innerHTML = `<div class="sheet"><p class="hint error">Não foi possível carregar os dados. Verifique a conexão ou a URL do App da Web nas configurações.</p></div><div style="padding:0 16px 16px"><button data-action="reload-view" class="submit-btn">Tentar novamente</button></div>`;
+  }
+}
+
+function renderPainel(etapas, boletins){
+  const main = document.getElementById('main');
+  const etapasHtml = etapas.length ? etapas.map(e => renderEtapaCard(e, false)).join('') : `<div class="sheet"><p class="hint">Nenhuma etapa cadastrada ainda.</p></div>`;
+  main.innerHTML = `
+    <h2 class="section-title">Painel de etapas</h2>
+    ${etapasHtml}
+    <h2 class="section-title">Lançamentos</h2>
+    <div class="viewtools">
+      <input id="searchBox" placeholder="Buscar por empreendimento, encarregado ou data...">
+      <button data-action="reload-view">&#8635; Atualizar</button>
+    </div>
+    <div id="viewList"></div>
+  `;
+  window.__viewData = boletins;
+  document.getElementById('searchBox').addEventListener('input', filterView);
+  paintViewList(boletins);
+}
+
+function filterView(){
+  const term = document.getElementById('searchBox').value.toLowerCase();
+  const filtered = window.__viewData.filter(d =>
+    (d.empreendimento||'').toLowerCase().includes(term) ||
+    (d.encarregado||'').toLowerCase().includes(term) ||
+    String(d.data||'').toLowerCase().includes(term)
+  );
+  paintViewList(filtered);
+}
+
+function paintViewList(data){
+  document.getElementById('viewList').innerHTML = data.length
+    ? data.map(renderCard).join('')
+    : `<div class="sheet"><p class="hint">Nenhum lançamento encontrado.</p></div>`;
+}
+
+function renderCard(d){
+  const prod = (d.producao||[]).filter(i=>i.local||i.quantidade).map(i =>
+    `<tr><td>${esc(i.local)}</td><td>${esc(i.quantidade)} ${esc(i.unidade)}</td></tr>`
+  ).join('') || `<tr><td colspan="2" class="muted">—</td></tr>`;
+  const mat = (d.materiais||[]).filter(i=>i.material).map(i =>
+    `<tr><td>${esc(i.material)}</td><td>${esc(i.quantidade)} ${esc(i.unidade)}</td></tr>`
+  ).join('') || `<tr><td colspan="2" class="muted">—</td></tr>`;
+  return `
+    <article class="sheet card">
+      <div class="card-head">
+        <div><strong>${esc(d.empreendimento)}</strong><br><span class="muted small">${esc(d.encarregado)}</span></div>
+        <div class="datebadge">${formatDateBR(d.data)}</div>
+      </div>
+      <p class="muted small">${esc(d.condicao||'')}</p>
+      <h3>Execução (por etapa)</h3>
+      <table class="mini"><tbody>${prod}</tbody></table>
+      <h3>Materiais</h3>
+      <table class="mini"><tbody>${mat}</tbody></table>
+      <p><strong>Equipe/equipamentos:</strong> ${esc(d.equipe)||'—'}</p>
+      <p><strong>Fotos:</strong> ${d.fotosRealizadas==='SIM'?'realizadas':'não realizadas'}, ${d.fotosEnviadas==='SIM'?'enviadas':'não enviadas'} (qtd ${esc(d.qtdFotos)||0})</p>
+      <p><strong>Ocorrências:</strong> ${esc(d.ocorrencias)||'Sem ocorrência.'}</p>
+      <p class="muted small">Preenchido por ${esc(d.preenchidoPor)||'—'} · recebido em ${formatDateTimeBR(d.timestamp)}</p>
+      <p>${d.confirmado ? `<span class="badge ok">✓ Confirmado pelo empreiteiro em ${formatDateTimeBR(d.confirmadoEm)}</span>` : `<span class="badge pending">Aguardando confirmação do empreiteiro</span>`}</p>
+    </article>
+  `;
+}
+
+async function renderConfirmScreen(id, api){
+  root.innerHTML = `
+    <header class="topbar"><div class="brand"><img class="logo" src="logo.png" alt="" onerror="this.style.display='none'"><div class="brandtext"><span class="brand-co">SIZE ENGENHARIA</span><h1>Confirmação de boletim</h1></div></div></header>
+    <div id="confirmMain"></div>
+  `;
+  const main = document.getElementById('confirmMain');
+  if(!api){
+    main.innerHTML = `<div class="sheet"><p class="hint error">Link inválido — faltam informações para carregar o boletim.</p></div>`;
+    return;
+  }
+  main.innerHTML = `<div class="sheet"><p class="hint">Carregando boletim…</p></div>`;
+  try{
+    const res = await fetch(api + '?action=get&id=' + encodeURIComponent(id));
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || 'Boletim não encontrado');
+    paintConfirmScreen(json.data, id, api);
+  }catch(err){
+    main.innerHTML = `<div class="sheet"><p class="hint error">Não foi possível carregar esse boletim. O link pode estar incorreto ou fora do ar.</p></div>`;
+  }
+}
+
+function paintConfirmScreen(d, id, api){
+  const main = document.getElementById('confirmMain');
+  const card = renderCard(d);
+  if(d.confirmado){
+    main.innerHTML = card + `<div class="sheet" style="text-align:center"><p class="badge ok">✓ Já confirmado em ${formatDateTimeBR(d.confirmadoEm)}</p></div>`;
+    return;
+  }
+  main.innerHTML = card + `
+    <div class="sheet" style="text-align:center">
+      <p class="hint" style="margin-bottom:12px">Confira as informações acima. Se estiver tudo correto, confirme abaixo.</p>
+      <button class="submit-btn" id="confirmBtn">Confirmo que está correto</button>
+    </div>
+  `;
+  document.getElementById('confirmBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('confirmBtn');
+    btn.disabled = true; btn.textContent = 'Confirmando...';
+    try{
+      const res = await fetch(api + '?action=confirm', {
+        method: 'POST',
+        body: JSON.stringify({ id }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const json = await res.json();
+      if(!json.ok) throw new Error(json.error);
+      showToast('Confirmado ✓', 'ok');
+      main.innerHTML = card + `<div class="sheet" style="text-align:center"><p class="badge ok">✓ Confirmado agora</p></div>`;
+    }catch(err){
+      showToast('Sem conexão — tente novamente', 'warn');
+      btn.disabled = false; btn.textContent = 'Confirmo que está correto';
+    }
+  });
+}
+
+function openSettings(){
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal">
+      <h2>Configurações</h2>
+      <label>URL do App da Web (Google Apps Script)<input id="cfgUrl" value="${esc(CONFIG.scriptUrl||'')}" placeholder="https://script.google.com/macros/s/.../exec"></label>
+      <p class="hint" style="text-align:left">Veja o passo a passo no arquivo LEIA-ME.md para gerar essa URL.</p>
+      <label>Empreendimento padrão<input id="cfgEmp" value="${esc(CONFIG.empreendimentoPadrao||'')}"></label>
+      <label>Encarregado padrão<input id="cfgEnc" value="${esc(CONFIG.encarregadoPadrao||'')}"></label>
+      <div class="modal-actions">
+        <button data-action="close-modal" class="ghost">Cancelar</button>
+        <button data-action="save-settings" class="submit-btn">Salvar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+function closeModal(){ const m = document.querySelector('.modal-overlay'); if(m) m.remove(); }
+function saveSettings(){
+  const url = document.getElementById('cfgUrl').value.trim();
+  const emp = document.getElementById('cfgEmp').value.trim();
+  const enc = document.getElementById('cfgEnc').value.trim();
+  saveConfig({...CONFIG, scriptUrl:url, empreendimentoPadrao:emp, encarregadoPadrao:enc});
+  closeModal();
+  render();
+}
+function setupSave(){
+  const url = document.getElementById('setupUrl').value.trim();
+  if(!url) return;
+  saveConfig({...CONFIG, scriptUrl:url, mode: CONFIG.mode || 'editar'});
+  render();
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if(!btn) return;
+  const action = btn.dataset.action;
+  if(action === 'settings') openSettings();
+  else if(action === 'mode'){ saveConfig({...CONFIG, mode: btn.dataset.mode}); render(); }
+  else if(action === 'add-producao') addProducaoRow();
+  else if(action === 'add-material') addMaterialRow();
+  else if(action === 'remove-row') btn.closest('.item-row').remove();
+  else if(action === 'flush-queue') tryFlushQueue();
+  else if(action === 'reload-view') renderView();
+  else if(action === 'close-modal') closeModal();
+  else if(action === 'save-settings') saveSettings();
+  else if(action === 'setup-save') setupSave();
+  else if(action === 'encerrar-etapa') onEncerrarEtapa(btn.dataset.id);
+});
+
+render();
+tryFlushQueue();
+window.addEventListener('online', tryFlushQueue);
+</script>
+</body>
+</html>
